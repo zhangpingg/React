@@ -262,9 +262,9 @@ const RootCompleted = 5;
 
 // Describes where we are in the React execution stack
 let executionContext: ExecutionContext = NoContext;
-// The root we're working on
+// 正在构建的 Fiber 树的根节点
 let workInProgressRoot: FiberRoot | null = null;
-// The fiber we're working on
+// 正在构建的 Fiber 树
 let workInProgress: Fiber | null = null;
 // The lanes we're rendering
 let workInProgressRootRenderLanes: Lanes = NoLanes;
@@ -1573,8 +1573,9 @@ function renderRootSync(root: FiberRoot, lanes: Lanes) {
 
 // The work loop is an extremely hot path. Tell Closure not to inline it.
 /** @noinline */
+// performSyncWorkOnRoot(同步更新)会调用该方法
 function workLoopSync() {
-  // Already timed out, so perform work without checking if we need to yield.
+  // 已经超时了，所以执行工作时不检查是否需要让步
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress);
   }
@@ -1660,6 +1661,7 @@ function renderRootConcurrent(root: FiberRoot, lanes: Lanes) {
 }
 
 /** @noinline */
+// performConcurrentWorkOnRoot(异步更新)会调用该方法
 function workLoopConcurrent() {
   // Perform work until Scheduler asks us to yield
   while (workInProgress !== null && !shouldYield()) {
@@ -1667,10 +1669,9 @@ function workLoopConcurrent() {
   }
 }
 
+// 作用: 创建下一个Fiber节点，并与 workInProgress 连接起来构成Fiber树
+// unitOfWork: 当前正在构建的 workInProgress 树？？？当前组件对应的Fiber节点？？？
 function performUnitOfWork(unitOfWork: Fiber): void {
-  // The current, flushed, state of this fiber is the alternate. Ideally
-  // nothing should rely on this, but relying on it here means that we don't
-  // need an additional field on the work in progress.
   const current = unitOfWork.alternate;
   setCurrentDebugFiberInDEV(unitOfWork);
 

@@ -3647,9 +3647,9 @@ function attemptEarlyBailoutIfNoScheduledUpdate(
 }
 
 function beginWork(
-  current: Fiber | null,
-  workInProgress: Fiber,
-  renderLanes: Lanes,
+  current: Fiber | null,        // 当前组件对应的Fiber节点在上一次更新时的Fiber节点，即 workInProgress.alternate
+  workInProgress: Fiber,        // 当前组件对应的Fiber节点
+  renderLanes: Lanes,           // 优先级相关
 ): Fiber | null {
   if (__DEV__) {
     if (workInProgress._debugNeedsRemount && current !== null) {
@@ -3668,16 +3668,15 @@ function beginWork(
       );
     }
   }
-
+  // update时：如果current存在可能存在优化路径，可以复用current（即上一次更新的Fiber节点）
   if (current !== null) {
     const oldProps = current.memoizedProps;
     const newProps = workInProgress.pendingProps;
 
     if (
-      oldProps !== newProps ||
-      hasLegacyContextChanged() ||
-      // Force a re-render if the implementation changed due to hot reload:
-      (__DEV__ ? workInProgress.type !== current.type : false)
+      oldProps !== newProps || hasLegacyContextChanged() 
+      // 如果实现因热重载而改变，则强制重新渲染
+      || (__DEV__ ? workInProgress.type !== current.type : false)
     ) {
       // If props or context changed, mark the fiber as having performed work.
       // This may be unset if the props are determined to be equal later (memo).
@@ -3697,6 +3696,7 @@ function beginWork(
       ) {
         // No pending updates or context. Bail out now.
         didReceiveUpdate = false;
+        // 复用current
         return attemptEarlyBailoutIfNoScheduledUpdate(
           current,
           workInProgress,
@@ -3741,6 +3741,7 @@ function beginWork(
   // move this assignment out of the common path and into each branch.
   workInProgress.lanes = NoLanes;
 
+  // mount时：根据tag不同，创建不同的子Fiber节点
   switch (workInProgress.tag) {
     case IndeterminateComponent: {
       return mountIndeterminateComponent(
